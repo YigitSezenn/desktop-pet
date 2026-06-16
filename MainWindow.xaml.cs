@@ -15,10 +15,10 @@ public partial class MainWindow : Window
     private const int WsExToolwindow = 0x00000080;
     private const int WsExNoactivate = 0x08000000;
 
-    private const double RoamZoneWidth = 400;
     private const double EdgeMarginLeft = 16;
+    private const double EdgeMarginRight = 16;
     private const double EdgeMarginBottom = 8;
-    private const double WanderSpeed = 1.6;
+    private const double WanderSpeed = 1.4;
     private const double ArrivalDistance = 6;
     private const double JumpHeight = 30;
 
@@ -29,6 +29,8 @@ public partial class MainWindow : Window
     private readonly PetAnimator _petAnimator;
     private readonly TrayService _trayService;
     private readonly PetMenuBuilder _menuBuilder;
+
+    public PetAnimator PetAnimator => _petAnimator;
 
     private double _targetX;
     private bool _isDragging;
@@ -42,9 +44,10 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _settings = PetSettings.Load();
-        _petAnimator = new PetAnimator(PetImage);
+        _settings.PetId = PetCatalog.NormalizeId(_settings.PetId);
+        _petAnimator = new PetAnimator(PetImage, _settings.PetId);
         _trayService = new TrayService(this, _settings);
-        _menuBuilder = new PetMenuBuilder(this, _settings, _trayService);
+        _menuBuilder = new PetMenuBuilder(this, _settings, _trayService, _petAnimator);
 
         _wanderTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
         _wanderTimer.Tick += OnWanderTick;
@@ -61,6 +64,15 @@ public partial class MainWindow : Window
         PetNameText.Text = name;
         NameBubble.Visibility = string.IsNullOrWhiteSpace(name)
             ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public void ChangePet(string petId)
+    {
+        _settings.PetId = PetCatalog.NormalizeId(petId);
+        _settings.Save();
+        _petAnimator.Reload(_settings.PetId);
+        _trayService.UpdateIcon(_settings.PetId);
+        PickNewWanderTarget();
     }
 
     public void PauseWandering()
@@ -127,12 +139,12 @@ public partial class MainWindow : Window
         _isPerformingAction = true;
         _petAnimator.SetState(PetAnimationState.Jump);
 
-        const int steps = 20;
+        const int steps = 28;
         var ground = _groundTop;
         for (var i = 0; i <= steps; i++)
         {
             Top = ground - Math.Sin(i / (double)steps * Math.PI) * JumpHeight;
-            await Task.Delay(25);
+            await Task.Delay(35);
         }
         Top = ground;
 
@@ -146,7 +158,7 @@ public partial class MainWindow : Window
         _isPerformingAction = true;
         _petAnimator.SetState(PetAnimationState.Sleep);
 
-        await Task.Delay(_random.Next(3000, 6000));
+        await Task.Delay(_random.Next(5000, 9000));
 
         _petAnimator.SetState(PetAnimationState.Idle);
         _isPerformingAction = false;
@@ -157,7 +169,13 @@ public partial class MainWindow : Window
     {
         var workArea = SystemParameters.WorkArea;
         var minX = workArea.Left + EdgeMarginLeft;
-        var maxX = minX + Math.Max(0, RoamZoneWidth - Width);
+        var maxX = workArea.Right - Width - EdgeMarginRight;
+        if (maxX <= minX)
+        {
+            _targetX = minX;
+            return;
+        }
+
         _targetX = minX + _random.NextDouble() * (maxX - minX);
     }
 
@@ -179,8 +197,8 @@ public partial class MainWindow : Window
     private void UpdateFacing(double dx)
     {
         // Sprite varsayilan olarak SOLA bakiyor; saga giderken aynala
-        PetVisual.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
-        PetVisual.RenderTransform = dx > 0
+        PetImage.RenderTransformOrigin = new System.Windows.Point(0.5, 0.5);
+        PetImage.RenderTransform = dx > 0
             ? new ScaleTransform(-1, 1)
             : new ScaleTransform(1, 1);
     }

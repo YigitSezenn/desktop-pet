@@ -8,27 +8,41 @@ public sealed class TrayService : IDisposable
 {
     private readonly NotifyIcon _notifyIcon;
     private readonly MainWindow _mainWindow;
+    private readonly PetSettings _settings;
+    private readonly PetMenuBuilder _menuBuilder;
 
     public TrayService(MainWindow mainWindow, PetSettings settings)
     {
         _mainWindow = mainWindow;
-
-        var menuBuilder = new PetMenuBuilder(mainWindow, settings, this);
+        _settings = settings;
+        _menuBuilder = new PetMenuBuilder(mainWindow, settings, this, mainWindow.PetAnimator);
 
         _notifyIcon = new NotifyIcon
         {
-            Icon = LoadTrayIcon(),
+            Icon = LoadTrayIcon(settings.PetId),
             Text = $"Desktop Pet - {settings.PetName}",
             Visible = true,
-            ContextMenuStrip = menuBuilder.BuildTrayMenu()
+            ContextMenuStrip = _menuBuilder.BuildTrayMenu()
         };
 
         _notifyIcon.DoubleClick += (_, _) => ShowPet();
     }
 
+    public void RefreshMenu()
+    {
+        _notifyIcon.ContextMenuStrip = _menuBuilder.BuildTrayMenu();
+    }
+
     public void UpdateTooltip(string petName)
     {
         _notifyIcon.Text = $"Desktop Pet - {petName}";
+    }
+
+    public void UpdateIcon(string petId)
+    {
+        var oldIcon = _notifyIcon.Icon;
+        _notifyIcon.Icon = LoadTrayIcon(petId);
+        oldIcon?.Dispose();
     }
 
     public void ShowPet()
@@ -51,12 +65,13 @@ public sealed class TrayService : IDisposable
     public void Dispose()
     {
         _notifyIcon.Visible = false;
+        _notifyIcon.Icon?.Dispose();
         _notifyIcon.Dispose();
     }
 
-    private static Icon LoadTrayIcon()
+    private static Icon LoadTrayIcon(string petId)
     {
-        var assetsPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets");
+        var assetsPath = ResolveAssetsPath(petId);
         var iconPath = System.IO.Path.Combine(assetsPath, "pet.ico");
         if (System.IO.File.Exists(iconPath))
         {
@@ -71,5 +86,12 @@ public sealed class TrayService : IDisposable
         }
 
         return SystemIcons.Application;
+    }
+
+    private static string ResolveAssetsPath(string petId)
+    {
+        var basePath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets");
+        var petFolder = System.IO.Path.Combine(basePath, PetCatalog.NormalizeId(petId));
+        return System.IO.Directory.Exists(petFolder) ? petFolder : basePath;
     }
 }
