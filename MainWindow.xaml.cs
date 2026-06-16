@@ -117,8 +117,8 @@ public partial class MainWindow : Window
     {
         var roll = _random.Next(100);
 
-        if (roll < 25)       { _ = PlaySleepAsync(); return; }
-        if (roll < 50)       { _ = PlayJumpAsync();  return; }
+        if (roll < 25) { _ = PlaySleepAsync(); return; }
+        if (roll < 50) { _ = PlayJumpAsync(); return; }
         PickNewWanderTarget();
     }
 
@@ -173,7 +173,7 @@ public partial class MainWindow : Window
     {
         var workArea = SystemParameters.WorkArea;
         Left = Math.Clamp(Left, workArea.Left, workArea.Right - Width);
-        Top  = Math.Clamp(Top,  workArea.Top,  workArea.Bottom - Height);
+        Top = Math.Clamp(Top, workArea.Top, workArea.Bottom - Height);
     }
 
     private void UpdateFacing(double dx)
@@ -201,7 +201,7 @@ public partial class MainWindow : Window
         var sp = PointToScreen(e.GetPosition(this));
         var prevLeft = Left;
         Left = sp.X - _dragOffset.X;
-        Top  = sp.Y - _dragOffset.Y;
+        Top = sp.Y - _dragOffset.Y;
         ClampToWorkArea();
         if (Math.Abs(Left - prevLeft) > 0.1)
             UpdateFacing(Left - prevLeft);
@@ -224,11 +224,158 @@ public partial class MainWindow : Window
         if (_random.Next(100) >= 55) return;
 
         string[] lines =
-        [
-            "voff!", "neresi?", "kovalıyorum~",
-            "zzzz...", "bu böyle olmaz!", "hey!",
-            "koşuyorum!", "dur bakalım..."
-        ];
+ [
+     "voff!",
+    "neresi?",
+    "kovalıyorum~",
+    "zzzz...",
+    "bu böyle olmaz!",
+    "hey!",
+    "koşuyorum!",
+    "dur bakalım...",
+
+    // Günlük
+    "günaydın!",
+    "selam dostum!",
+    "buradayım!",
+    "beni çağırdın mı?",
+    "nasıl gidiyor?",
+    "işler yolunda mı?",
+    "seni bekliyordum.",
+    "bugün harika olacak!",
+    "hadi başlayalım!",
+    "hazırım!",
+
+    // Köpek davranışları
+    "kuyruk sallanıyor!",
+    "bir şey duydum!",
+    "kokusunu aldım!",
+    "patiler hazır!",
+    "devriye zamanı!",
+    "tehlike yok.",
+    "bölge güvenli.",
+    "kapıyı ben kontrol ederim.",
+    "kim geldi?",
+    "şüpheli ses tespit edildi.",
+    "vof vof!",
+    "hav!",
+    "çok heyecanlıyım!",
+    "bir tur atalım mı?",
+    "koş koş koş!",
+    "yakalıyorum!",
+    "kaçamazsın!",
+    "iz sürüyorum...",
+    "hedefe yaklaşıyorum.",
+    "görev tamamlandı!",
+
+    // Sevimli
+    "mama zamanı mı?",
+    "ödül maması isterim.",
+    "karnım biraz acıktı.",
+    "biraz sevgi lazım.",
+    "başımı okşar mısın?",
+    "yanındayım.",
+    "en iyi dostun burada.",
+    "seni koruyorum.",
+    "iyi ki geldin!",
+    "seni görünce mutlu oldum.",
+    "birlikte takılalım.",
+    "yalnız değilsin.",
+    "kocaman sarılma!",
+    "patimi uzatıyorum.",
+    "bugün çok tatlıyım.",
+
+    // Tembel
+    "beş dakika daha...",
+    "çok rahatım.",
+    "uykum geldi...",
+    "esniyorum...",
+    "şekerleme vakti.",
+    "beni uyandırma...",
+    "rüyam çok güzeldi.",
+    "enerji tasarrufu modu.",
+    "gözler kapanıyor...",
+    "uyuyorum sayılır.",
+
+    // Oyunbaz
+    "oyun zamanı!",
+    "topu gördün mü?",
+    "yakala beni!",
+    "saklambaç oynayalım.",
+    "çok sıkıldım...",
+    "bir şeyler yapalım.",
+    "eğlence nerede?",
+    "hareket lazım!",
+    "macera zamanı!",
+    "hadi koşalım!",
+
+    // Masaüstü / bilgisayar
+    "ekranı koruyorum.",
+    "fareyi gördüm!",
+    "hayır, o fare değilmiş.",
+    "klavyeye göz kulak oluyorum.",
+    "bu pencere şüpheli.",
+    "çok fazla sekme açık.",
+    "bir mola iyi gelir.",
+    "sistem devriyesi tamam.",
+    "görev çubuğu güvende.",
+    "arka planda çalışıyorum.",
+    "RAM'ini yemem söz.",
+    "CPU bugün biraz sıcak.",
+    "kod yazıyorsun ha?",
+    "bir bug kokusu aldım.",
+    "hata avına çıkıyorum.",
+    "debug zamanı!",
+    "build başarılı olsun.",
+    "stack trace nerede?",
+    "bu satır masum görünmüyor.",
+    "bir breakpoint bırakmışsın.",
+
+    // Komik
+    "ben yapmadım.",
+    "kesin kedilerin işi.",
+    "kanıtları yok ediyorum... şaka şaka.",
+    "çok profesyonelim.",
+    "bir planım var.",
+    "aslında planı unuttum.",
+    "önemli görünmeye çalışıyorum.",
+    "beni kim işe aldı?",
+    "maaşımı mama olarak alıyorum.",
+    "bu tamamen kontrolüm altında.",
+    "belki de değildir.",
+    "gizli görevdeyim.",
+    "ajan pati göreve hazır.",
+    "sana yardım edebilirim.",
+    "ya da köstek olabilirim.",
+    "bunu kim programladı?",
+    "çok iyi gidiyoruz!",
+    "sanırım.",
+    "endişelenecek bir şey yok.",
+    "umarım.",
+
+    // Rastgele
+    "hmm...",
+    "ilginç.",
+    "bir dakika.",
+    "bekle...",
+    "olabilir.",
+    "emin değilim.",
+    "kontrol ediyorum.",
+    "işlem sürüyor...",
+    "tamamdır!",
+    "sorun çözülmüş gibi.",
+    "her şey yolunda.",
+    "şimdilik.",
+    "sessizlik güzel.",
+    "çok sessiz oldu...",
+    "fazla sessiz oldu...",
+    "bir şeyler dönüyor.",
+    "anlaşıldı.",
+    "kaydedildi.",
+    "not edildi.",
+    "görev bekleniyor."
+ ];
+
         SetSpeech(lines[_random.Next(lines.Length)]);
         _ = Task.Run(async () =>
         {
