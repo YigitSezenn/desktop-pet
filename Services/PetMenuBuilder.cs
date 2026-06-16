@@ -9,12 +9,18 @@ public sealed class PetMenuBuilder
     private readonly MainWindow _mainWindow;
     private readonly PetSettings _settings;
     private readonly TrayService _trayService;
+    private readonly PetAnimator _petAnimator;
 
-    public PetMenuBuilder(MainWindow mainWindow, PetSettings settings, TrayService trayService)
+    public PetMenuBuilder(
+        MainWindow mainWindow,
+        PetSettings settings,
+        TrayService trayService,
+        PetAnimator petAnimator)
     {
         _mainWindow = mainWindow;
         _settings = settings;
         _trayService = trayService;
+        _petAnimator = petAnimator;
     }
 
     public ContextMenu BuildWpfMenu()
@@ -43,6 +49,8 @@ public sealed class PetMenuBuilder
 
         items.Add(new Separator());
 
+        items.Add(BuildPetSelectionMenu());
+
         var renameItem = new MenuItem { Header = "İsim Değiştir..." };
         renameItem.Click += (_, _) => RenamePet();
         items.Add(renameItem);
@@ -59,11 +67,47 @@ public sealed class PetMenuBuilder
         items.Add(exitItem);
     }
 
+    private MenuItem BuildPetSelectionMenu()
+    {
+        var menu = new MenuItem { Header = "Hayvan Seç" };
+
+        foreach (var pet in PetCatalog.All)
+        {
+            var item = new MenuItem
+            {
+                Header = pet.DisplayName,
+                IsCheckable = true,
+                IsChecked = string.Equals(_settings.PetId, pet.Id, StringComparison.OrdinalIgnoreCase)
+            };
+
+            var petId = pet.Id;
+            item.Click += (_, _) => SelectPet(petId);
+            menu.Items.Add(item);
+        }
+
+        return menu;
+    }
+
     private void AddTrayItems(System.Windows.Forms.ToolStripItemCollection items)
     {
         items.Add("Göster", null, (_, _) => _trayService.ShowPet());
         items.Add("Gizle", null, (_, _) => _trayService.HidePet());
         items.Add(new System.Windows.Forms.ToolStripSeparator());
+
+        var petMenu = new System.Windows.Forms.ToolStripMenuItem("Hayvan Seç");
+        foreach (var pet in PetCatalog.All)
+        {
+            var petId = pet.Id;
+            var item = new System.Windows.Forms.ToolStripMenuItem(pet.DisplayName)
+            {
+                Checked = string.Equals(_settings.PetId, petId, StringComparison.OrdinalIgnoreCase),
+                CheckOnClick = false
+            };
+            item.Click += (_, _) => SelectPet(petId);
+            petMenu.DropDownItems.Add(item);
+        }
+        items.Add(petMenu);
+
         items.Add("İsim Değiştir...", null, (_, _) => RenamePet());
         items.Add(new System.Windows.Forms.ToolStripSeparator());
 
@@ -77,6 +121,30 @@ public sealed class PetMenuBuilder
 
         items.Add(new System.Windows.Forms.ToolStripSeparator());
         items.Add("Kapat", null, (_, _) => _trayService.ExitApp());
+    }
+
+    private void SelectPet(string petId)
+    {
+        var normalized = PetCatalog.NormalizeId(petId);
+        if (string.Equals(_settings.PetId, normalized, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var definition = PetCatalog.Find(normalized)!;
+        _settings.PetId = normalized;
+
+        if (string.IsNullOrWhiteSpace(_settings.PetName) ||
+            PetCatalog.All.Any(p => string.Equals(p.DefaultName, _settings.PetName, StringComparison.OrdinalIgnoreCase)))
+        {
+            _settings.PetName = definition.DefaultName;
+            _mainWindow.UpdatePetName(_settings.PetName);
+            _trayService.UpdateTooltip(_settings.PetName);
+        }
+
+        _settings.Save();
+        _mainWindow.ChangePet(normalized);
+        _trayService.RefreshMenu();
     }
 
     public void ShowRenameDialog()

@@ -39,6 +39,14 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 
 `dist\DesktopPet-win-x64` klasörünü ZIP'leyip gönder. **Assets** klasörü EXE ile aynı yerde olmalı.
 
+Detaylı adımlar: [RELEASE.md](RELEASE.md)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\CreateReleaseZip.ps1
+```
+
+ZIP dosyası: `dist\DesktopPet-v1.0-win-x64.zip`
+
 ## Kullanım
 
 | Eylem | Ne yapar |

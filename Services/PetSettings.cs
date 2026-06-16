@@ -10,6 +10,7 @@ public sealed class PetSettings
 
   private static readonly string SettingsPath = System.IO.Path.Combine(SettingsDirectory, "settings.json");
 
+  public string PetId { get; set; } = "fox";
   public string PetName { get; set; } = "Mochi";
   public bool StartWithWindows { get; set; } = true;
 
